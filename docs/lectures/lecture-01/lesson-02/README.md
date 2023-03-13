@@ -1,38 +1,40 @@
-# Lesson 1.2: Building the Example Code
+# Lesson 1.2: Kuber Marketplace Demo
 
-Welcome to Lesson 1.2! In this lesson you'll identify what are the code repositories for this course, and also, you will set up your working environment.
+Welcome to Lesson 1.2! In this lesson, you'll watch a demonstration of the Kuber Marketplace, a dApp that you'll be able to create after finishing this course.
 
-{% embed url="https://youtu.be/zPaDp4R9X7o" %}
+{% embed url="https://youtu.be/ZaB-7ZYBi3g" %}
 
 {% tabs %}
 {% tab title="Learning Objectives" %}
 After completing this lesson, you'll be able to:
 
-* Identify and clone the repositories required for the course.
-* Setup a local working environment.
+* Explain what Kuber is.
+* Identify the benefits of using Kuber to create a Cardano dApp.
+* Deploy a dApp using Demeter.
 {% endtab %}
 
 {% tab title="Lesson Resources" %}
-Links mentioned in this lesson:
+Internet resources mentioned in the lesson's video:
 
-* [Plutus Pioneer Program Repository](https://github.com/input-output-hk/plutus-pioneer-program)
-* [Plutus Apps Repository](https://github.com/input-output-hk/plutus-apps)
+* [Kuber Marketplace Repository](https://github.com/dQuadrant/cardano-marketplace)
+* [Demeter.run website](https://demeter.run/)
 {% endtab %}
 
 {% tab title="Additional Resources" %}
 To learn more about the topics covered in this lesson, we encourage you to review the following resources:
 
-* [Nix Reference Manual: nix-shell](https://nixos.org/manual/nix/stable/command-ref/nix-shell.html)
+* [Kuber a new open source library for Cardano](https://dquadrant.com/blog/kuber-a-new-open-source-library-for-cardano/)
 {% endtab %}
 {% endtabs %}
 
-### Frequently Asked Questions
+## Collaborate with the Pioneers Community
 
-<details>
+Remember that you can interact with the participants of the PPP through the [IOG's technical community on Discord](https://discord.gg/inputoutput) by joining the channels under the Plutus Pioneers category.
 
-<summary>Can I use any operating system for the course?</summary>
+If during the program you have questions about Plutus, we invite you to share them at [Cardano Stack Exchange (CSE)](https://cardano.stackexchange.com/) by adding the `plutus-pioneer-program` tag to your question. The IOG's Education Team members will monitor these questions to support your learning journey. Whenever you share a question at CSE, you're helping to build up the Cardano and Plutus development knowledge base.
 
-To successfully follow all the activities of this course, you are encourage to use a Linux based operating system if you want to run a local development environment. Please, refer to the [Working Environment Set Up section](../../../prework/setup/README.md) to learn more about it.
+---
 
-</details>
+This work is licensed under a [Creative Commons Attribution 4.0 International License](http://creativecommons.org/licenses/by/4.0/).
 
+<figure><img src="https://i.creativecommons.org/l/by/4.0/88x31.png" alt="Creative Commons License BY 4.0"></figure>

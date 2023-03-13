@@ -1,34 +1,67 @@
-{-# LANGUAGE BangPatterns #-}
-{-# LANGUAGE CPP #-}
-{-# LANGUAGE DataKinds #-}
-{-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE NamedFieldPuns #-}
-{-# LANGUAGE RankNTypes #-}
-{-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE TypeApplications #-}
-{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE DataKinds         #-}
 {-# LANGUAGE NoImplicitPrelude #-}
-{-# LANGUAGE ImportQualifiedPost #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TemplateHaskell   #-}
 
 module Vesting where
 
-import Cardano.Api.Shelley (PlutusScript (..))
-import Codec.Serialise (serialise)
-import qualified Data.ByteString.Lazy as BSL
-import qualified Data.ByteString.Short as BSS
-import Plutus.V2.Ledger.Api qualified as PlutusV2
-import PlutusTx
-import PlutusTx.Prelude
-import Cardano.Api
+import           Data.Maybe                (fromJust)
+import           Plutus.V1.Ledger.Interval (contains)
+import           Plutus.V2.Ledger.Api      (BuiltinData, POSIXTime, PubKeyHash,
+                                            ScriptContext (scriptContextTxInfo),
+                                            TxInfo (txInfoValidRange),
+                                            Validator, from, mkValidatorScript)
+import           Plutus.V2.Ledger.Contexts (txSignedBy)
+import           PlutusTx                  (compile, unstableMakeIsData)
+import           PlutusTx.Prelude          (Bool, traceIfFalse, ($), (&&))
+import           Prelude                   (IO, String)
+import           Utilities                 (Network, posixTimeFromIso8601,
+                                            printDataToJSON,
+                                            validatorAddressBech32, wrap,
+                                            writeValidatorToFile)
+
+---------------------------------------------------------------------------------------------------
+----------------------------------- ON-CHAIN / VALIDATOR ------------------------------------------
+
+data VestingDatum = VestingDatum
+    { beneficiary :: PubKeyHash
+    , deadline    :: POSIXTime
+    }
+
+unstableMakeIsData ''VestingDatum
 
 {-# INLINABLE mkVestingValidator #-}
-mkVestingValidator :: BuiltinData -> BuiltinData -> BuiltinData -> ()
-mkVestingValidator _ _ _ = ()
+mkVestingValidator :: VestingDatum -> () -> ScriptContext -> Bool
+mkVestingValidator dat () ctx = traceIfFalse "beneficiary's signature missing" signedByBeneficiary &&
+                                traceIfFalse "deadline not reached" deadlineReached
+  where
+    info :: TxInfo
+    info = scriptContextTxInfo ctx
 
-validator :: PlutusV2.Validator
-validator = PlutusV2.mkValidatorScript $$(PlutusTx.compile [|| mkVestingValidator ||])
+    signedByBeneficiary :: Bool
+    signedByBeneficiary = txSignedBy info $ beneficiary dat
 
-serialized :: PlutusScript PlutusScriptV2
-serialized = PlutusScriptSerialised . BSS.toShort . BSL.toStrict . serialise $ validator
+    deadlineReached :: Bool
+    deadlineReached = contains (from $ deadline dat) $ txInfoValidRange info
+
+{-# INLINABLE  mkWrappedVestingValidator #-}
+mkWrappedVestingValidator :: BuiltinData -> BuiltinData -> BuiltinData -> ()
+mkWrappedVestingValidator = wrap mkVestingValidator
+
+validator :: Validator
+validator = mkValidatorScript $$(compile [|| mkWrappedVestingValidator ||])
+
+---------------------------------------------------------------------------------------------------
+------------------------------------- HELPER FUNCTIONS --------------------------------------------
+
+saveVal :: IO ()
+saveVal = writeValidatorToFile "./assets/vesting.plutus" validator
+
+vestingAddressBech32 :: Network -> String
+vestingAddressBech32 network = validatorAddressBech32 network validator
+
+printVestingDatumJSON :: PubKeyHash -> String -> IO ()
+printVestingDatumJSON pkh time = printDataToJSON $ VestingDatum
+    { beneficiary = pkh
+    , deadline    = fromJust $ posixTimeFromIso8601 time
+    }

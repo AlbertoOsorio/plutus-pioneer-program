@@ -1,16 +1,17 @@
-{-# LANGUAGE DataKinds #-}
-{-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE DataKinds           #-}
 {-# LANGUAGE ImportQualifiedPost #-}
+{-# LANGUAGE NoImplicitPrelude   #-}
+{-# LANGUAGE OverloadedStrings   #-}
+{-# LANGUAGE TemplateHaskell     #-}
 
 module FortyTwo where
 
-import Plutus.V2.Ledger.Api qualified as PlutusV2
-import PlutusTx
-import PlutusTx.Prelude (otherwise, (==))
-import Utils (writePlutusFile)
-import Prelude (IO)
-import PlutusTx.Builtins as Builtins
+import qualified Plutus.V2.Ledger.Api as PlutusV2
+import           PlutusTx             (BuiltinData, compile)
+import           PlutusTx.Builtins    as Builtins (mkI)
+import           PlutusTx.Prelude     (otherwise, traceError, (==))
+import           Prelude              (IO)
+import           Utilities            (writeValidatorToFile)
 
 ---------------------------------------------------------------------------------------------------
 ----------------------------------- ON-CHAIN / VALIDATOR ------------------------------------------
@@ -20,7 +21,7 @@ import PlutusTx.Builtins as Builtins
 mk42Validator :: BuiltinData -> BuiltinData -> BuiltinData -> ()
 mk42Validator _ r _
     | r == Builtins.mkI 42 = ()
-    | otherwise            = error ()
+    | otherwise            = traceError "expected 42"
 {-# INLINABLE mk42Validator #-}
 
 validator :: PlutusV2.Validator
@@ -30,4 +31,4 @@ validator = PlutusV2.mkValidatorScript $$(PlutusTx.compile [|| mk42Validator ||]
 ------------------------------------- HELPER FUNCTIONS --------------------------------------------
 
 saveVal :: IO ()
-saveVal = writePlutusFile "./assets/fortytwo.plutus" validator
+saveVal = writeValidatorToFile "./assets/fortytwo.plutus" validator
