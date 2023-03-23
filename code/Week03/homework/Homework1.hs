@@ -11,10 +11,10 @@ import           Plutus.V1.Ledger.Interval (contains)
 import           Plutus.V2.Ledger.Api      (BuiltinData, POSIXTime, PubKeyHash,
                                             ScriptContext (scriptContextTxInfo),
                                             TxInfo (txInfoValidRange),
-                                            Validator, from, mkValidatorScript)
+                                            Validator, from, to, mkValidatorScript)
 import           Plutus.V2.Ledger.Contexts (txSignedBy)
 import           PlutusTx             (compile, unstableMakeIsData)
-import           PlutusTx.Prelude     (Bool, ($), (&&), traceIfFalse)
+import           PlutusTx.Prelude     (Bool, ($), (&&), traceIfFalse, (+))
 import           Utilities            (wrap)
 
 ---------------------------------------------------------------------------------------------------
@@ -33,9 +33,9 @@ unstableMakeIsData ''VestingDatum
 -- or if beneficiary2 has signed the transaction and the deadline has passed.
 mkVestingValidator :: VestingDatum -> () -> ScriptContext -> Bool
 mkVestingValidator _dat () _ctx = 
-  if deadlineReached
-    then traceIfFalse "Deadline has been reached. Second beneficiary's signature missing" signedByBeneficiary2
-  else traceIfFalse "Deadline has not been reached. First beneficiary's signature missing" signedByBeneficiary1
+  if deadlinePassed
+    then traceIfFalse "Deadline has been passed. Second beneficiary's signature missing" signedByBeneficiary2
+  else traceIfFalse "First beneficiary's signature missing" signedByBeneficiary1 && traceIfFalse "Deadline has not been passed" notDeadlinePassed
   where
     info :: TxInfo
     info = scriptContextTxInfo _ctx
@@ -46,8 +46,11 @@ mkVestingValidator _dat () _ctx =
     signedByBeneficiary2 :: Bool
     signedByBeneficiary2 = txSignedBy info $ beneficiary2 _dat
 
-    deadlineReached :: Bool
-    deadlineReached = contains (from $ deadline _dat) $ txInfoValidRange info
+    deadlinePassed :: Bool
+    deadlinePassed = contains (from $ (deadline _dat) + 1) $ txInfoValidRange info
+
+    notDeadlinePassed :: Bool
+    notDeadlinePassed = contains (to $ (deadline _dat) +1) $ txInfoValidRange info
 
 {-# INLINABLE  mkWrappedVestingValidator #-}
 mkWrappedVestingValidator :: BuiltinData -> BuiltinData -> BuiltinData -> ()
